@@ -106,6 +106,30 @@ impl Graph {
         }
     }
 
+    pub fn link(
+        &mut self,
+        src_name: &str,
+        src_pad: u32,
+        dst_name: &str,
+        dst_pad: u32,
+    ) -> Result<(), Error> {
+        unsafe {
+            let src = self
+                .get(src_name)
+                .ok_or(Error::FilterNotFound)?
+                .as_mut_ptr();
+            let dst = self
+                .get(dst_name)
+                .ok_or(Error::FilterNotFound)?
+                .as_mut_ptr();
+
+            match avfilter_link(src, src_pad, dst, dst_pad) {
+                0 => Ok(()),
+                e => Err(Error::from(e)),
+            }
+        }
+    }
+
     pub fn input(&mut self, name: &str, pad: usize) -> Result<Parser, Error> {
         Parser::new(self).input(name, pad)
     }

@@ -110,6 +110,14 @@ impl Decoder {
     pub fn time_base(&self) -> Rational {
         unsafe { Rational::from((*self.as_ptr()).time_base) }
     }
+
+    /// Time base is unused on decoding, but setting the value can still be
+    /// useful.
+    pub fn set_time_base(&mut self, value: Rational) {
+        unsafe {
+            (*self.as_mut_ptr()).time_base = value.into();
+        }
+    }
 }
 
 impl Deref for Decoder {

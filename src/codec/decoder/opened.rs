@@ -90,6 +90,12 @@ impl Opened {
         }
     }
 
+    pub fn set_frame_rate(&mut self, value: Rational) {
+        unsafe {
+            (*self.as_mut_ptr()).framerate = value.into();
+        }
+    }
+
     pub fn flush(&mut self) {
         unsafe {
             avcodec_flush_buffers(self.as_mut_ptr());
