@@ -70,11 +70,25 @@ impl Output {
         }
     }
 
-    pub fn add_stream<E: traits::Encoder>(&mut self, codec: E) -> Result<StreamMut, Error> {
+    pub fn add_stream_with<E: traits::Encoder>(&mut self, codec: E) -> Result<StreamMut, Error> {
         unsafe {
             let codec = codec.encoder();
             let codec = codec.map_or(ptr::null(), |c| c.as_ptr());
             let ptr = avformat_new_stream(self.as_mut_ptr(), codec);
+
+            if ptr.is_null() {
+                return Err(Error::Unknown);
+            }
+
+            let index = (*self.ctx.as_ptr()).nb_streams - 1;
+
+            Ok(StreamMut::wrap(&mut self.ctx, index as usize))
+        }
+    }
+
+    pub fn add_stream(&mut self) -> Result<StreamMut, Error> {
+        unsafe {
+            let ptr = avformat_new_stream(self.as_mut_ptr(), ptr::null());
 
             if ptr.is_null() {
                 return Err(Error::Unknown);
