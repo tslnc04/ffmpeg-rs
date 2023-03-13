@@ -1,3 +1,8 @@
+use crate::{
+    util::format::{Pixel, Sample},
+    ChannelLayout,
+};
+
 use super::Context;
 use ffi::*;
 use libc::c_int;
@@ -50,16 +55,40 @@ impl<'a> Sink<'a> {
         unsafe { av_buffersink_get_h(self.ctx.as_ptr()) as u32 }
     }
 
-    pub fn time_base(&self) -> crate::Rational {
+    pub fn time_base(&self) -> Rational {
         unsafe { Rational::from(av_buffersink_get_time_base(self.ctx.as_ptr())) }
     }
 
-    pub fn frame_rate(&self) -> crate::Rational {
+    pub fn frame_rate(&self) -> Rational {
         unsafe { Rational::from(av_buffersink_get_frame_rate(self.ctx.as_ptr())) }
     }
 
-    // TODO(tslnc04): figure out how to deal with the format being either sample
-    // format or pixel format
+    pub fn pixel_format(&self) -> Result<Pixel, Error> {
+        unsafe {
+            if av_buffersink_get_type(self.ctx.as_ptr()) != AVMediaType::AVMEDIA_TYPE_VIDEO {
+                return Err(Error::InvalidData);
+            }
+
+            // pretty dangerous but this should be same enough since it emulates
+            // what is done in ffmpeg and we make sure it's a video sink
+            let pixel_format =
+                &av_buffersink_get_format(self.ctx.as_ptr()) as *const i32 as *const AVPixelFormat;
+            Ok((*pixel_format).into())
+        }
+    }
+
+    pub fn sample_format(&self) -> Result<Sample, Error> {
+        unsafe {
+            if av_buffersink_get_type(self.ctx.as_ptr()) != AVMediaType::AVMEDIA_TYPE_AUDIO {
+                return Err(Error::InvalidData);
+            }
+
+            // same as above, could be dangerous but should be fine
+            let sample_format =
+                &av_buffersink_get_format(self.ctx.as_ptr()) as *const i32 as *const AVSampleFormat;
+            Ok((*sample_format).into())
+        }
+    }
 
     pub fn sample_rate(&self) -> i32 {
         unsafe { av_buffersink_get_sample_rate(self.ctx.as_ptr()) as i32 }
@@ -70,7 +99,11 @@ impl<'a> Sink<'a> {
     }
 
     // TODO(tslnc04): figure out how to convert this to the ffmpeg_rs type
-    pub fn channel_layout(&self) -> i64 {
-        unsafe { av_buffersink_get_channel_layout(self.ctx.as_ptr()) as i64 }
+    pub fn channel_layout(&self) -> ChannelLayout {
+        unsafe {
+            ChannelLayout::from_bits_truncate(
+                av_buffersink_get_channel_layout(self.ctx.as_ptr()) as u64
+            )
+        }
     }
 }
