@@ -91,19 +91,17 @@ impl<'a> Sink<'a> {
     }
 
     pub fn sample_rate(&self) -> i32 {
-        unsafe { av_buffersink_get_sample_rate(self.ctx.as_ptr()) as i32 }
+        unsafe { av_buffersink_get_sample_rate(self.ctx.as_ptr()) }
     }
 
     pub fn channels(&self) -> i32 {
-        unsafe { av_buffersink_get_channels(self.ctx.as_ptr()) as i32 }
+        unsafe { av_buffersink_get_channels(self.ctx.as_ptr()) }
     }
 
     // TODO(tslnc04): figure out how to convert this to the ffmpeg_rs type
     pub fn channel_layout(&self) -> ChannelLayout {
         unsafe {
-            ChannelLayout::from_bits_truncate(
-                av_buffersink_get_channel_layout(self.ctx.as_ptr()) as u64
-            )
+            ChannelLayout::from_bits_truncate(av_buffersink_get_channel_layout(self.ctx.as_ptr()))
         }
     }
 }
