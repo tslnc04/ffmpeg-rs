@@ -11,6 +11,8 @@ pub struct Destructor {
     mode: Mode,
 }
 
+unsafe impl Send for Destructor {}
+
 impl Destructor {
     pub unsafe fn new(ptr: *mut AVFormatContext, mode: Mode) -> Self {
         Destructor { ptr, mode }
